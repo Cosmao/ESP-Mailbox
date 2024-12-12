@@ -3,8 +3,9 @@
 #include "esp_log.h"
 #include "freertos/idf_additions.h"
 #include "portmacro.h"
+#include "soc/gpio_num.h"
 
-#define pin 7
+#define pin GPIO_NUM_7
 
 void reedTask(void *pvParam) {
   gpio_set_direction(pin, GPIO_MODE_INPUT);
