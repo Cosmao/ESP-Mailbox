@@ -10,8 +10,9 @@ void app_main() {
   TaskHandle_t reedHandle;
   BaseType_t ret =
       xTaskCreate(&reedTask, "ReedSwitch", 2048, NULL, 3, &reedHandle);
-  if (reedHandle != pdPASS) {
+  if (ret != pdPASS) {
     ESP_LOGE("TASK", "Error creating reedSwitch task");
+    vTaskDelete(reedHandle);
   }
   return;
 }
