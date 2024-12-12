@@ -1,4 +1,6 @@
-.git
+.git/
 .cache/
 out/
 compile_commands.json
+.pio/
+sdkconfig*
