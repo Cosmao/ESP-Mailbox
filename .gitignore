@@ -3,4 +3,3 @@
 out/
 compile_commands.json
 .pio/
-sdkconfig*
