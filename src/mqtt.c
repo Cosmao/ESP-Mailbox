@@ -1,5 +1,4 @@
 #include "include/mqtt.h"
-#include "esp_crt_bundle.h"
 #include "esp_event_base.h"
 #include "esp_log.h"
 
