@@ -1,6 +1,6 @@
 #include "deep_sleep.h"
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
+#include "freertos/idf_additions.h"
 #include "soc/gpio_num.h"
 #include <stdlib.h>
 
