@@ -65,7 +65,6 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin) {
   struct timeval circuit_open_time, current_time;
   gettimeofday(&circuit_open_time, NULL);
   ESP_ERROR_CHECK(rtc_gpio_set_direction(wakeup_pin, RTC_GPIO_MODE_INPUT_ONLY));
-  ESP_LOGI(TAG, "Pin is %s", gpio_get_level(wakeup_pin) == 0 ? "low" : "high");
   while (gpio_get_level(wakeup_pin) == 1) {
     ESP_LOGI(TAG, "Pin is %s",
              gpio_get_level(wakeup_pin) == 0 ? "low" : "high");
