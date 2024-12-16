@@ -3,9 +3,11 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
+#include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "hal/rtc_io_types.h"
+#include "mqtt_client.h"
 #include "soc/gpio_num.h"
 #include "soc/soc_caps.h"
 #include <stdio.h>
@@ -29,7 +31,11 @@ void enable_rtc_io_wake(int wakeup_pin, int level) {
   ESP_LOGI(TAG, "Enabling GPIO wakeup on pin %d", wakeup_pin);
 }
 
-void start_deep_sleep() {
+void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client) {
+  ESP_LOGI(TAG, "Disabling mqtt");
+  esp_mqtt_client_stop(mqtt_client);
+  ESP_LOGI(TAG, "Disabling wifi");
+  esp_wifi_stop();
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   ESP_LOGI(TAG, "Entering deep sleep");
   gettimeofday(&sleep_enter_time, NULL);
