@@ -6,9 +6,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "hal/rtc_io_types.h"
-#include "nvs.h"
-#include "nvs_flash.h"
-#include "sdkconfig.h"
 #include "soc/gpio_num.h"
 #include "soc/soc_caps.h"
 #include <stdio.h>

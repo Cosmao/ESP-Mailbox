@@ -1,6 +1,5 @@
 #include "deep_sleep.h"
 #include "driver/gpio.h"
-#include "esp_err.h"
 #include "esp_log.h"
 #include "soc/gpio_num.h"
 
