@@ -36,7 +36,6 @@ void start_deep_sleep() {
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   ESP_LOGI(TAG, "Entering deep sleep");
   gettimeofday(&sleep_enter_time, NULL);
-  // enter deep sleep
   esp_deep_sleep_start();
 }
 
@@ -61,7 +60,7 @@ void get_wake_source() {
   }
 }
 
-uint8_t wait_for_low(gpio_num_t wakeup_pin) {
+uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
   struct timeval circuit_open_time, current_time;
   gettimeofday(&circuit_open_time, NULL);
   ESP_ERROR_CHECK(rtc_gpio_set_direction(wakeup_pin, RTC_GPIO_MODE_INPUT_ONLY));
@@ -69,7 +68,7 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin) {
     ESP_LOGI(TAG, "Pin is %s",
              gpio_get_level(wakeup_pin) == 0 ? "low" : "high");
     gettimeofday(&current_time, NULL);
-    if (current_time.tv_sec - 30 >= circuit_open_time.tv_sec) {
+    if (current_time.tv_sec - max_seconds_wait >= circuit_open_time.tv_sec) {
       return 1;
     }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
