@@ -20,6 +20,7 @@ void start_measurement(gpio_num_t gpio_pin_trig);
 long wait_for_echo(gpio_num_t gpio_pin_echo, int16_t timeout, uint8_t level);
 long get_distance(long u_seconds);
 esp_err_t init_distance_gpio(gpio_num_t gpio_trigger, gpio_num_t gpio_echo);
+long get_measurement(distance_measurements *distance_struct);
 void measure_distance_task(void *pvParameters);
 
 #endif // !ultrasonic_distance_h

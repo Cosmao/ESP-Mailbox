@@ -49,7 +49,6 @@ long get_distance(long u_seconds) {
   if (u_seconds <= 0) {
     return -1;
   }
-  /*, m/s * microseconds * 10^3 = mm */
   return u_seconds * 340 / 2 / 1000;
 }
 
@@ -62,6 +61,18 @@ esp_err_t init_distance_gpio(gpio_num_t gpio_trigger, gpio_num_t gpio_echo) {
   return ret;
 }
 
+long get_measurement(distance_measurements *distance_struct) {
+  start_measurement(distance_struct->gpio_trigger);
+  long micros_for_echo = wait_for_echo(
+      distance_struct->gpio_echo, distance_struct->timeout_in_u_seconds, 1);
+
+  if (micros_for_echo == -1) {
+    return micros_for_echo;
+  }
+
+  return get_distance(micros_for_echo);
+}
+
 void measure_distance_task(void *pvParameters) {
   distance_measurements *distance_struct =
       (distance_measurements *)pvParameters;
@@ -69,25 +80,20 @@ void measure_distance_task(void *pvParameters) {
   ESP_ERROR_CHECK(init_distance_gpio(distance_struct->gpio_trigger,
                                      distance_struct->gpio_echo));
 
-  ESP_LOGI(TAG, "Trig: %d\nEcho: %d\nTimeout: %d\nLong is %du bytes",
-           distance_struct->gpio_trigger, distance_struct->gpio_echo,
-           distance_struct->timeout_in_u_seconds, sizeof(long));
-
   while (1) {
     long total_distance = 0;
     uint8_t total_measurements = 0;
     for (int16_t i = 0; i < numberOfMeasurements; i++) {
-      start_measurement(distance_struct->gpio_trigger);
-      long microsForEcho = wait_for_echo(
-          distance_struct->gpio_echo, distance_struct->timeout_in_u_seconds, 1);
-      if (microsForEcho == -1) {
+
+      long distance = get_measurement(distance_struct);
+
+      if (distance == -1) {
         ESP_LOGE(TAG, "Error in distance read loop %d", i);
       } else {
         total_measurements++;
-        long distance_in_mm = get_distance(microsForEcho);
-        total_distance += distance_in_mm;
-        distance_struct->measured_array[i] = distance_in_mm;
-        ESP_LOGI(TAG, "Loop %d measured: %ldmm", i, distance_in_mm);
+        total_distance += distance;
+        distance_struct->measured_array[i] = distance;
+        ESP_LOGI(TAG, "Loop %d measured: %ldmm", i, distance);
       }
       /* delaying to let the sensor reset */
       vTaskDelay(50 / portTICK_PERIOD_MS);
