@@ -17,10 +17,9 @@ int16_t wait_for_echo(gpio_num_t gpio_pin, uint8_t timeout, uint8_t level) {
 /* Speed of sound at sea level 0°C 331m/s
  * Its only a rough estimate this, should be good enough */
 int16_t get_distance(int16_t u_seconds) {
-  int16_t distance_in_mm = 0;
   if (u_seconds <= 0) {
     return -1;
   }
-  distance_in_mm = 331000 * (u_seconds / 1000000);
-  return distance_in_mm;
+  /*, m/s * microseconds * 10^3 = mm */
+  return 331 * u_seconds * 1000;
 }
