@@ -44,7 +44,7 @@ void app_main(void) {
 
   TaskHandle_t distance_handle;
   BaseType_t task_ret = xTaskCreate(measure_distance_task, "Distance-Task",
-                                    2048, distance_struct, 5, &distance_handle);
+                                    3048, distance_struct, 5, &distance_handle);
   if (task_ret == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) {
     vTaskDelete(distance_handle);
     ESP_LOGE(TAG, "Failed to create task, deleting");
