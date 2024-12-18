@@ -1,5 +1,7 @@
 #include "ultrasonic_distance.h"
 #include "driver/gpio.h"
+#include "esp_err.h"
+#include "hal/gpio_types.h"
 #include <rom/ets_sys.h>
 
 /* Busy wait for the echo response */
@@ -22,4 +24,13 @@ int16_t get_distance(int16_t u_seconds) {
   }
   /*, m/s * microseconds * 10^3 = mm */
   return 331 * u_seconds * 1000;
+}
+
+esp_err_t init_distance_gpio(gpio_num_t gpio_trigger, gpio_num_t gpio_echo) {
+  esp_err_t ret = gpio_set_direction(gpio_trigger, GPIO_MODE_OUTPUT);
+  if (ret != ESP_OK) {
+    return ret;
+  }
+  ret = gpio_set_direction(gpio_echo, GPIO_MODE_INPUT);
+  return ret;
 }
