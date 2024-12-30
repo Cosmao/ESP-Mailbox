@@ -2,7 +2,6 @@
 #include "driver/rtc_io.h"
 #include "esp_err.h"
 #include "esp_log.h"
-#include "esp_sleep.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -42,7 +41,7 @@ void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client) {
   esp_deep_sleep_start();
 }
 
-void get_wake_source() {
+esp_sleep_wakeup_cause_t get_wake_source() {
   struct timeval now;
   gettimeofday(&now, NULL);
   int sleep_time_ms = (now.tv_sec - sleep_enter_time.tv_sec) * 1000 +
@@ -51,15 +50,16 @@ void get_wake_source() {
   case ESP_SLEEP_WAKEUP_TIMER: {
     ESP_LOGI(TAG, "Woke up from Timer. Time spent in deep sleep: %dms",
              sleep_time_ms);
-    break;
+    return ESP_SLEEP_WAKEUP_TIMER;
   }
   case ESP_SLEEP_WAKEUP_EXT0: {
     ESP_LOGI(TAG, "Woke up from external RTC_IO");
-    break;
+    return ESP_SLEEP_WAKEUP_EXT0;
   }
   case ESP_SLEEP_WAKEUP_UNDEFINED:
   default:
     ESP_LOGI(TAG, "Not a deep sleep wake");
+    return 0;
   }
 }
 
