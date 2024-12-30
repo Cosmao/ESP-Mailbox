@@ -2,6 +2,7 @@
 #define ultrasonic_distance_h
 
 #include "esp_err.h"
+#include "freertos/idf_additions.h"
 #include "soc/gpio_num.h"
 #include <stdint.h>
 
@@ -22,5 +23,7 @@ long get_distance(long u_seconds);
 esp_err_t init_distance_gpio(gpio_num_t gpio_trigger, gpio_num_t gpio_echo);
 long get_measurement(distance_measurements *distance_struct);
 void measure_distance_task(void *pvParameters);
+esp_err_t wait_for_distance(distance_measurements *distance_struct,
+                            TaskHandle_t task_handle);
 
 #endif // !ultrasonic_distance_h

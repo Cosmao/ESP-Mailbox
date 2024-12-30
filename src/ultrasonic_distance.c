@@ -1,12 +1,15 @@
 #include "ultrasonic_distance.h"
+#include "deep_sleep.h"
 #include "driver/gpio.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/idf_additions.h"
+#include "freertos/projdefs.h"
 #include "hal/gpio_types.h"
 #include "portmacro.h"
+#include "soc/gpio_num.h"
 #include <rom/ets_sys.h>
 #include <stdint.h>
 #include <time.h>
@@ -111,4 +114,21 @@ void measure_distance_task(void *pvParameters) {
   }
   distance_struct->task_done = 1;
   vTaskDelete(NULL);
+}
+
+esp_err_t wait_for_distance(distance_measurements *distance_struct,
+                            TaskHandle_t task_handle) {
+  if (task_handle == NULL) {
+    BaseType_t task_ret = xTaskCreate(&measure_distance_task, "Distance-task",
+                                      3048, distance_struct, 5, &task_handle);
+    if (task_ret == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) {
+      vTaskDelete(task_handle);
+      ESP_LOGE(TAG, "Failed to create distance task");
+      return ESP_ERR_NO_MEM;
+    }
+  }
+  while (distance_struct->task_done != 1) {
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
+  return ESP_OK;
 }

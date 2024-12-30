@@ -1,3 +1,4 @@
+#include "deep_sleep.h"
 #include "driver/rtc_io.h"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -77,4 +78,83 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
   return 0;
+}
+
+uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin) {
+  if (!wait_for_low(wakeup_pin, 0)) {
+    enable_rtc_io_wake(wakeup_pin, 1);
+    return 1;
+  }
+  return 0;
+}
+
+wake_actions handle_wake_source(gpio_num_t WAKEUP_PIN) {
+  switch (get_wake_source()) {
+  case ESP_SLEEP_WAKEUP_UNDEFINED:
+  case ESP_SLEEP_WAKEUP_TIMER: {
+    if (enable_rtc_if_closed(WAKEUP_PIN)) {
+      return WAKE_ACTION_SEND_ALIVE;
+    } else {
+      return WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
+    }
+  }
+  case ESP_SLEEP_WAKEUP_EXT0: {
+    return WAKE_ACTION_SEND_DISTANCE;
+  }
+  default: {
+    return WAKE_ACTION_SEND_UNK_ERROR;
+  }
+  }
+}
+
+void handle_wake_actions(wake_actions action,
+                         esp_mqtt_client_handle_t mqtt_client,
+                         distance_measurements *distance_struct) {
+
+  while (action != WAKE_ACTION_NO_ACTION) {
+    TaskHandle_t distance_task_handle;
+    switch (action) {
+    case WAKE_ACTION_NO_ACTION: {
+      break;
+    }
+    case WAKE_ACTION_SEND_DISTANCE: {
+      esp_err_t ret = wait_for_distance(distance_struct, distance_task_handle);
+      if (ret == ESP_OK) {
+        esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE HERE", 0, 1,
+                                0);
+      } else {
+        esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE THREAD ERROR",
+                                0, 1, 0);
+      }
+      action = WAKE_ACTION_NO_ACTION;
+      enable_rtc_io_wake(WAKEUP_PIN, 1);
+      break;
+    }
+    case WAKE_ACTION_SEND_ALIVE: {
+      // FIXME: Proper message and topic
+      esp_mqtt_client_publish(mqtt_client, "asd/asd", "IM ALIVE", 0, 1, 0);
+      action = WAKE_ACTION_NO_ACTION;
+      enable_rtc_io_wake(WAKEUP_PIN, 1);
+      break;
+    }
+    case WAKE_ACTION_WAIT_FOR_RTC_CLOSE: {
+      if (wait_for_low(WAKEUP_PIN, RTC_TIMEOUT_SEC)) {
+        action = WAKE_ACTION_SEND_ERROR_OPEN;
+      } else {
+        action = WAKE_ACTION_SEND_DISTANCE;
+      }
+      break;
+    }
+    case WAKE_ACTION_SEND_ERROR_OPEN: {
+      esp_mqtt_client_publish(mqtt_client, "asd/asd", "ERROR IS OPEN", 0, 1, 0);
+      action = WAKE_ACTION_NO_ACTION;
+      break;
+    }
+    case WAKE_ACTION_SEND_UNK_ERROR: {
+      esp_mqtt_client_publish(mqtt_client, "asd/asd", "VERY ERROR", 0, 1, 0);
+      action = WAKE_ACTION_NO_ACTION;
+      break;
+    }
+    }
+  }
 }
