@@ -1,11 +1,12 @@
-# ESP-Letterbox
+# ESP-Mailbox
 ### Stuff done
  - Deep sleep
+ - wifi
+ - mqtt
+ - distance sensor
 
 ### Todo
- - wifi / lora
- - mqtt
- - detect if letters, gonna be fun
+ - lora
  - device shadow, could be nice for the wake timer and stuff
  - fota
 
