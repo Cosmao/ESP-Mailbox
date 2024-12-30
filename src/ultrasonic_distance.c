@@ -1,10 +1,8 @@
 #include "ultrasonic_distance.h"
-#include "deep_sleep.h"
 #include "driver/gpio.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_timer.h"
-#include "freertos/FreeRTOS.h"
 #include "freertos/idf_additions.h"
 #include "freertos/projdefs.h"
 #include "hal/gpio_types.h"
@@ -116,8 +114,8 @@ void measure_distance_task(void *pvParameters) {
   vTaskDelete(NULL);
 }
 
-esp_err_t wait_for_distance(distance_measurements *distance_struct,
-                            TaskHandle_t task_handle) {
+esp_err_t wait_for_distance(distance_measurements *distance_struct) {
+  TaskHandle_t task_handle;
   if (task_handle == NULL) {
     BaseType_t task_ret = xTaskCreate(&measure_distance_task, "Distance-task",
                                       3048, distance_struct, 5, &task_handle);

@@ -4,7 +4,6 @@
 #include "esp_log.h"
 #include "esp_sleep.h"
 #include "esp_wifi.h"
-#include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "hal/rtc_io_types.h"
 #include "mqtt_client.h"
@@ -88,11 +87,11 @@ uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin) {
   return 0;
 }
 
-wake_actions handle_wake_source(gpio_num_t WAKEUP_PIN) {
+wake_actions handle_wake_source(gpio_num_t wakeup_pin) {
   switch (get_wake_source()) {
   case ESP_SLEEP_WAKEUP_UNDEFINED:
   case ESP_SLEEP_WAKEUP_TIMER: {
-    if (enable_rtc_if_closed(WAKEUP_PIN)) {
+    if (enable_rtc_if_closed(wakeup_pin)) {
       return WAKE_ACTION_SEND_ALIVE;
     } else {
       return WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
@@ -111,14 +110,17 @@ void handle_wake_actions(wake_actions action,
                          esp_mqtt_client_handle_t mqtt_client,
                          distance_measurements *distance_struct) {
 
+#define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
+#define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
+#define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
+
   while (action != WAKE_ACTION_NO_ACTION) {
-    TaskHandle_t distance_task_handle;
     switch (action) {
     case WAKE_ACTION_NO_ACTION: {
       break;
     }
     case WAKE_ACTION_SEND_DISTANCE: {
-      esp_err_t ret = wait_for_distance(distance_struct, distance_task_handle);
+      esp_err_t ret = wait_for_distance(distance_struct);
       if (ret == ESP_OK) {
         esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE HERE", 0, 1,
                                 0);

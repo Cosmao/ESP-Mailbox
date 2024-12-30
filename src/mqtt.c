@@ -1,6 +1,8 @@
 #include "include/mqtt.h"
 #include "esp_event_base.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "freertos/idf_additions.h"
 #include "mqtt_client.h"
 #include "wifi.h"
 
@@ -107,10 +109,11 @@ esp_mqtt_client_handle_t mqtt_start(void) {
   return client;
 }
 
-void mqtt_task(void *pvParameter) {
-  esp_mqtt_client_handle_t mqtt_client = (esp_mqtt_client_handle_t)pvParameter;
+esp_mqtt_client_handle_t mqtt_enable(void) {
   if (wifi_init_station()) {
-    mqtt_client = mqtt_start();
+    return mqtt_start();
+  } else {
+    ESP_LOGE(TAG, "WIFI DIDNT START");
+    esp_restart();
   }
-  return;
 }
