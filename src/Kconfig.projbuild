@@ -64,4 +64,40 @@ menu "Wifi and MQTT config"
             bool "WAPI PSK"
     endchoice
 
+    config ESP_RTC_WAKEUP_PIN
+      int "RTC Wakeup pin"
+      default 7
+      help
+        What pin to wakeup on
+
+    config ESP_RTC_TIMEOUT_SEC
+      int "RTC timeout in seconds"
+      default 30
+      help
+        How many seconds to wait on a reed wake before a timeout is triggered and we go back to sleep
+
+    config ESP_WAKEUP_TIME_IN_SEC
+      int "RTC Wakeup time in sec"
+      default 30
+      help
+        How many seconds between the ESP waking itself to check into the mqtt server to make sure the battery and connection is still good
+
+    config ESP_ECHO_PIN
+      int "Distance sensor echo pin"
+      default 4
+      help
+        What pin to register the distance sensors echo on
+
+    config ESP_TRIG_PIN
+      int "Distance sensor trigger pin"
+      default 5
+      help
+        What pin to trigger the distance sensor on
+
+    config ESP_DISTANCE_TIMEOUT_U_SEC
+      int "Distance sensors timeout in u seconds"
+      default 5000
+      help 
+        How many microseconds to wait for the echo on distance sensor
+
 endmenu

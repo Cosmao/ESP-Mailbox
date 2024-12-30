@@ -1,5 +1,4 @@
 #include "deep_sleep.h"
-#include "driver/gpio.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -9,13 +8,23 @@
 #include "mqtt_client.h"
 #include "nvs_flash.h"
 #include "portmacro.h"
-#include "soc/gpio_num.h"
+#include "sdkconfig.h"
 #include "ultrasonic_distance.h"
-#include "wifi.h"
 #include <stdlib.h>
 #include <time.h>
 
-#define WAKEUP_PIN GPIO_NUM_7
+// TODO: give info about wifi/mqtt to main thread
+// Pass along the wakeup pin and sleep timer?
+// all the good logic
+// Put the wakeup time and similar in NVS for device shadows
+
+#define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
+#define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
+#define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
+#define ECHO_PIN CONFIG_ESP_ECHO_PIN
+#define TRIG_PIN CONFIG_ESP_TRIG_PIN
+#define DISTANCE_TIMEOUT CONFIG_ESP_DISTANCE_TIMEOUT_U_SEC
+
 static char *TAG = "MAIN";
 
 void app_main(void) {
@@ -27,44 +36,26 @@ void app_main(void) {
   }
   ESP_ERROR_CHECK(ret);
 
-  get_wake_source();
-
   distance_measurements *distance_struct =
       (distance_measurements *)malloc(sizeof(distance_measurements));
-
   if (distance_struct == NULL) {
     ESP_LOGE(TAG, "Failed to malloc distance struct");
     esp_restart();
   }
-
   distance_struct->task_done = 0;
-  distance_struct->gpio_echo = GPIO_NUM_4;
-  distance_struct->gpio_trigger = GPIO_NUM_5;
-  distance_struct->timeout_in_u_seconds = 5000;
+  distance_struct->gpio_echo = ECHO_PIN;
+  distance_struct->gpio_trigger = TRIG_PIN;
+  distance_struct->timeout_in_u_seconds = DISTANCE_TIMEOUT;
 
-  TaskHandle_t distance_handle;
-  BaseType_t task_ret = xTaskCreate(measure_distance_task, "Distance-Task",
-                                    3048, distance_struct, 5, &distance_handle);
-  if (task_ret == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) {
-    vTaskDelete(distance_handle);
-    ESP_LOGE(TAG, "Failed to create task, deleting");
+  esp_mqtt_client_handle_t mqtt_client = mqtt_enable();
+  wake_actions action = WAKE_ACTION_NO_ACTION;
+
+  enable_timer_wake(WAKEUP_TIME_SEC);
+
+  if (mqtt_client != NULL) {
+    action = handle_wake_source(WAKEUP_PIN);
+    handle_wake_actions(action, mqtt_client, distance_struct);
   }
-
-  return;
-
-  wifi_init_station();
-  esp_mqtt_client_handle_t mqtt_client = mqtt_start();
-
-  if (wait_for_low(WAKEUP_PIN, 30)) {
-    ESP_LOGE(TAG, "Circuit open too long, disabling gpio wake");
-    enable_timer_wake(20);
-  } else {
-    enable_rtc_io_wake(WAKEUP_PIN, 1);
-    enable_timer_wake(20);
-  }
-
-  while (distance_struct->task_done != 1)
-    ;
 
   start_deep_sleep(mqtt_client);
 }

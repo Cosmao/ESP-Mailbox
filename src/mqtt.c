@@ -1,6 +1,10 @@
 #include "include/mqtt.h"
 #include "esp_event_base.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "freertos/idf_additions.h"
+#include "mqtt_client.h"
+#include "wifi.h"
 
 extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
 extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
@@ -103,4 +107,13 @@ esp_mqtt_client_handle_t mqtt_start(void) {
   snprintf(buff, buffSize, "{\"payload\":\"TestMessage\"}");
   esp_mqtt_client_enqueue(client, topic, buff, 0, 1, 0, false);
   return client;
+}
+
+esp_mqtt_client_handle_t mqtt_enable(void) {
+  if (wifi_init_station()) {
+    return mqtt_start();
+  } else {
+    ESP_LOGE(TAG, "WIFI DIDNT START");
+    esp_restart();
+  }
 }
