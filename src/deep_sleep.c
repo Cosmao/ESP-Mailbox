@@ -68,8 +68,6 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
   gettimeofday(&circuit_open_time, NULL);
   ESP_ERROR_CHECK(rtc_gpio_set_direction(wakeup_pin, RTC_GPIO_MODE_INPUT_ONLY));
   while (gpio_get_level(wakeup_pin) == 1) {
-    ESP_LOGI(TAG, "Pin is %s",
-             gpio_get_level(wakeup_pin) == 0 ? "low" : "high");
     gettimeofday(&current_time, NULL);
     if (current_time.tv_sec - max_seconds_wait >= circuit_open_time.tv_sec) {
       return 1;
@@ -80,7 +78,12 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
 }
 
 uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin) {
-  if (!wait_for_low(wakeup_pin, 0)) {
+#define numMeasurements 5
+  uint8_t numHigh = 0;
+  for (uint8_t i = 0; i < numMeasurements; i++) {
+    numHigh += wait_for_low(wakeup_pin, 0);
+  }
+  if (numHigh == 0) {
     enable_rtc_io_wake(wakeup_pin, 1);
     return 1;
   }
@@ -98,7 +101,11 @@ wake_actions handle_wake_source(gpio_num_t wakeup_pin) {
     }
   }
   case ESP_SLEEP_WAKEUP_EXT0: {
-    return WAKE_ACTION_SEND_DISTANCE;
+    if (enable_rtc_if_closed(wakeup_pin)) {
+      return WAKE_ACTION_SEND_DISTANCE;
+    } else {
+      return WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
+    }
   }
   default: {
     return WAKE_ACTION_SEND_UNK_ERROR;
@@ -113,14 +120,20 @@ void handle_wake_actions(wake_actions action,
 #define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
 #define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
 #define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
+  uint8_t taskMade = 0;
 
   while (action != WAKE_ACTION_NO_ACTION) {
     switch (action) {
     case WAKE_ACTION_NO_ACTION: {
-      break;
+      return;
     }
     case WAKE_ACTION_SEND_DISTANCE: {
-      esp_err_t ret = wait_for_distance(distance_struct);
+      esp_err_t ret = ESP_OK;
+      if (taskMade == 0) {
+        ret = wait_for_distance(distance_struct);
+        taskMade = 0;
+      }
+
       if (ret == ESP_OK) {
         esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE HERE", 0, 1,
                                 0);
@@ -128,15 +141,16 @@ void handle_wake_actions(wake_actions action,
         esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE THREAD ERROR",
                                 0, 1, 0);
       }
+
       action = WAKE_ACTION_NO_ACTION;
-      enable_rtc_io_wake(WAKEUP_PIN, 1);
+      enable_rtc_if_closed(WAKEUP_PIN);
       break;
     }
     case WAKE_ACTION_SEND_ALIVE: {
       // FIXME: Proper message and topic
       esp_mqtt_client_publish(mqtt_client, "asd/asd", "IM ALIVE", 0, 1, 0);
       action = WAKE_ACTION_NO_ACTION;
-      enable_rtc_io_wake(WAKEUP_PIN, 1);
+      enable_rtc_if_closed(WAKEUP_PIN);
       break;
     }
     case WAKE_ACTION_WAIT_FOR_RTC_CLOSE: {
@@ -155,6 +169,7 @@ void handle_wake_actions(wake_actions action,
     case WAKE_ACTION_SEND_UNK_ERROR: {
       esp_mqtt_client_publish(mqtt_client, "asd/asd", "VERY ERROR", 0, 1, 0);
       action = WAKE_ACTION_NO_ACTION;
+      enable_rtc_if_closed(WAKEUP_PIN);
       break;
     }
     }
