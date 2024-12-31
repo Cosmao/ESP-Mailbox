@@ -81,34 +81,30 @@ void measure_distance_task(void *pvParameters) {
   ESP_ERROR_CHECK(init_distance_gpio(distance_struct->gpio_trigger,
                                      distance_struct->gpio_echo));
 
-  while (1) {
-    long total_distance = 0;
-    uint8_t total_measurements = 0;
-    for (int16_t i = 0; i < numberOfMeasurements; i++) {
+  long total_distance = 0;
+  uint8_t total_measurements = 0;
+  for (int16_t i = 0; i < numberOfMeasurements; i++) {
 
-      long distance = get_measurement(distance_struct);
+    long distance = get_measurement(distance_struct);
 
-      if (distance == -1) {
-        ESP_LOGE(TAG, "Error in distance read loop %d", i);
-      } else {
-        total_measurements++;
-        total_distance += distance;
-        distance_struct->measured_array[i] = distance;
-        ESP_LOGI(TAG, "Loop %d measured: %ldmm", i, distance);
-      }
-      /* delaying to let the sensor reset */
-      vTaskDelay(50 / portTICK_PERIOD_MS);
-    }
-
-    if (total_measurements == 0) {
-      ESP_LOGE(TAG, "0 measurements taken!");
+    if (distance == -1) {
+      ESP_LOGE(TAG, "Error in distance read loop %d", i);
     } else {
-      distance_struct->average_measured = total_distance / total_measurements;
-      ESP_LOGI(TAG, "Total distance: %ldmm", total_distance);
-      ESP_LOGI(TAG, "Average distance: %ldmm",
-               distance_struct->average_measured);
+      total_measurements++;
+      total_distance += distance;
+      distance_struct->measured_array[i] = distance;
+      ESP_LOGI(TAG, "Loop %d measured: %ldmm", i, distance);
     }
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    /* delaying to let the sensor reset */
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+  }
+
+  if (total_measurements == 0) {
+    ESP_LOGE(TAG, "0 measurements taken!");
+  } else {
+    distance_struct->average_measured = total_distance / total_measurements;
+    ESP_LOGI(TAG, "Total distance: %ldmm", total_distance);
+    ESP_LOGI(TAG, "Average distance: %ldmm", distance_struct->average_measured);
   }
   distance_struct->task_done = 1;
   vTaskDelete(NULL);
@@ -116,14 +112,12 @@ void measure_distance_task(void *pvParameters) {
 
 esp_err_t wait_for_distance(distance_measurements *distance_struct) {
   TaskHandle_t task_handle;
-  if (task_handle == NULL) {
-    BaseType_t task_ret = xTaskCreate(&measure_distance_task, "Distance-task",
-                                      3048, distance_struct, 5, &task_handle);
-    if (task_ret == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) {
-      vTaskDelete(task_handle);
-      ESP_LOGE(TAG, "Failed to create distance task");
-      return ESP_ERR_NO_MEM;
-    }
+  BaseType_t task_ret = xTaskCreate(&measure_distance_task, "Distance-task",
+                                    3048, distance_struct, 5, &task_handle);
+  if (task_ret == errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY) {
+    vTaskDelete(task_handle);
+    ESP_LOGE(TAG, "Failed to create distance task");
+    return ESP_ERR_NO_MEM;
   }
   while (distance_struct->task_done != 1) {
     vTaskDelay(100 / portTICK_PERIOD_MS);

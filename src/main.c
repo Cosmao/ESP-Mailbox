@@ -2,12 +2,9 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "freertos/idf_additions.h"
-#include "freertos/projdefs.h"
 #include "mqtt.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
-#include "portmacro.h"
 #include "sdkconfig.h"
 #include "ultrasonic_distance.h"
 #include <stdlib.h>
