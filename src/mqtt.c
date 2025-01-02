@@ -2,20 +2,21 @@
 #include "esp_event_base.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "freertos/idf_additions.h"
 #include "mqtt_client.h"
 #include "wifi.h"
 
-extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
-extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
-extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
-extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
 extern const uint8_t
-    server_cert_pem_start[] asm("_binary_mosquitto_org_crt_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_mosquitto_org_crt_end");
+    client_cert_pem_start[] asm("_binary_client_pem_crt_start");
+extern const uint8_t client_cert_pem_end[] asm("_binary_client_pem_crt_end");
+extern const uint8_t client_key_pem_start[] asm("_binary_client_pem_key_start");
+extern const uint8_t client_key_pem_end[] asm("_binary_client_pem_key_end");
+extern const uint8_t
+    server_cert_pem_start[] asm("_binary_amazonrootca1_pem_start");
+extern const uint8_t server_cert_pem_end[] asm("_binary_amazonrootca1_pem_end");
 
 static const char *TAG = "Mqtt status";
-const char *topic = "kekw/esp/test/";
+const char *topic = CONFIG_ESP_MQTT_TOPIC;
+const char *endpoint = CONFIG_ESP_MQTT_ENDPOINT;
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
                                int32_t event_id, void *event_data) {
@@ -85,7 +86,7 @@ esp_mqtt_client_handle_t mqtt_start(void) {
 #define buffSize 100
 
   const esp_mqtt_client_config_t mqtt_cfg = {
-      .broker.address.uri = "mqtts://test.mosquitto.org:8884",
+      .broker.address.uri = endpoint,
       .broker.verification.certificate = (const char *)server_cert_pem_start,
       .credentials = {
           .authentication =
