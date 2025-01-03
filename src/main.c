@@ -10,11 +10,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-// TODO: give info about wifi/mqtt to main thread
-// Pass along the wakeup pin and sleep timer?
-// all the good logic
-// Put the wakeup time and similar in NVS for device shadows
-
 #define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
 #define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
 #define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC

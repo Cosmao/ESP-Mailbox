@@ -2,7 +2,8 @@ idf_component_register(SRCS "main.c" "deep_sleep.c" "wifi.c" "mqtt.c" "ultrasoni
                     INCLUDE_DIRS ""
                     REQUIRES mbedtls
                     EMBED_TXTFILES
-                    ../certs/mosquitto.org.crt
-                    ../certs/client.key
-                    ../certs/client.crt)
+                    ../certs/ca.crt
+                    ../certs/esp32.crt
+                    ../certs/esp32.key
+                    )
 

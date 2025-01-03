@@ -2,20 +2,20 @@
 #include "esp_event_base.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "freertos/idf_additions.h"
 #include "mqtt_client.h"
+#include "sdkconfig.h"
 #include "wifi.h"
 
-extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
-extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
-extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
-extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
-extern const uint8_t
-    server_cert_pem_start[] asm("_binary_mosquitto_org_crt_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_mosquitto_org_crt_end");
+extern const uint8_t client_cert_start[] asm("_binary_esp32_crt_start");
+extern const uint8_t client_cert_end[] asm("_binary_esp32_crt_end");
+extern const uint8_t client_key_start[] asm("_binary_esp32_key_start");
+extern const uint8_t client_key_end[] asm("_binary_esp32_key_end");
+extern const uint8_t server_cert_start[] asm("_binary_ca_crt_start");
+extern const uint8_t server_cert_end[] asm("_binary_ca_crt_end");
 
 static const char *TAG = "Mqtt status";
-const char *topic = "kekw/esp/test/";
+const char *mqtt_topic = CONFIG_ESP_MQTT_TOPIC;
+const char *mqtt_endpoint = CONFIG_ESP_MQTT_ENDPOINT;
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
                                int32_t event_id, void *event_data) {
@@ -27,14 +27,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
   switch ((esp_mqtt_event_id_t)event_id) {
   case MQTT_EVENT_CONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-    msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
+    msg_id = esp_mqtt_client_subscribe(client, mqtt_topic, 0);
     ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-    msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-    ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-    msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-    ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
     break;
   case MQTT_EVENT_DISCONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -42,8 +36,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
 
   case MQTT_EVENT_SUBSCRIBED:
     ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-    msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-    ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
     break;
   case MQTT_EVENT_UNSUBSCRIBED:
     ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
@@ -85,27 +77,26 @@ esp_mqtt_client_handle_t mqtt_start(void) {
 #define buffSize 100
 
   const esp_mqtt_client_config_t mqtt_cfg = {
-      .broker.address.uri = "mqtts://test.mosquitto.org:8884",
-      .broker.verification.certificate = (const char *)server_cert_pem_start,
+      .broker.address.uri = mqtt_endpoint,
+      .broker.verification.certificate = (const char *)server_cert_start,
+      .broker.verification.skip_cert_common_name_check = true,
       .credentials = {
           .authentication =
               {
-                  .certificate = (const char *)client_cert_pem_start,
-                  .key = (const char *)client_key_pem_start,
+                  .certificate = (const char *)client_cert_start,
+                  .key = (const char *)client_key_start,
               },
       }};
 
   ESP_LOGI(TAG, "[APP] Free memory: %" PRIu32 " bytes",
            esp_get_free_heap_size());
+  ESP_LOGI(TAG, "Connecting to endpoint: %s", mqtt_endpoint);
   esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
   /* The last argument may be used to pass data to the event handler, in this
    * example mqtt_event_handler */
   esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler,
                                  NULL);
   ESP_ERROR_CHECK(esp_mqtt_client_start(client));
-  char buff[buffSize];
-  snprintf(buff, buffSize, "{\"payload\":\"TestMessage\"}");
-  esp_mqtt_client_enqueue(client, topic, buff, 0, 1, 0, false);
   return client;
 }
 

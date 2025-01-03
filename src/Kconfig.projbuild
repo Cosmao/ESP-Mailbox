@@ -100,4 +100,15 @@ menu "Wifi and MQTT config"
       help 
         How many microseconds to wait for the echo on distance sensor
 
+    config ESP_MQTT_TOPIC
+      string "Mqtt topic to use"
+      default "letterbox/"
+      help
+        What topic its supposed to send messages to
+
+    config ESP_MQTT_ENDPOINT
+      string "Mqtt endpoint"
+      help
+        The endpoint that mqtt is going to use
+
 endmenu

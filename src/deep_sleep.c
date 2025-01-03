@@ -1,12 +1,16 @@
 #include "deep_sleep.h"
+#include "driver/gpio.h"
 #include "driver/rtc_io.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
 #include "esp_wifi.h"
 #include "freertos/task.h"
+#include "hal/gpio_types.h"
 #include "hal/rtc_io_types.h"
+#include "mqtt.h"
 #include "mqtt_client.h"
+#include "portmacro.h"
 #include "soc/gpio_num.h"
 #include "soc/soc_caps.h"
 #include <stdio.h>
@@ -32,6 +36,17 @@ void enable_rtc_io_wake(int wakeup_pin, int level) {
 
 void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client) {
   ESP_LOGI(TAG, "Disabling mqtt");
+  struct timeval start, now;
+  gettimeofday(&start, NULL);
+  while (esp_mqtt_client_get_outbox_size(mqtt_client) > 0) {
+    ESP_LOGI(TAG, "Message left to send, waiting");
+    gettimeofday(&now, NULL);
+    if (now.tv_sec - 1 > start.tv_sec) {
+      break;
+    }
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
+  esp_mqtt_client_unsubscribe(mqtt_client, mqtt_topic);
   esp_mqtt_client_stop(mqtt_client);
   ESP_LOGI(TAG, "Disabling wifi");
   esp_wifi_stop();
@@ -66,7 +81,7 @@ esp_sleep_wakeup_cause_t get_wake_source() {
 uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
   struct timeval circuit_open_time, current_time;
   gettimeofday(&circuit_open_time, NULL);
-  ESP_ERROR_CHECK(rtc_gpio_set_direction(wakeup_pin, RTC_GPIO_MODE_INPUT_ONLY));
+  ESP_ERROR_CHECK(gpio_set_direction(wakeup_pin, GPIO_MODE_INPUT));
   while (gpio_get_level(wakeup_pin) == 1) {
     gettimeofday(&current_time, NULL);
     if (current_time.tv_sec - max_seconds_wait >= circuit_open_time.tv_sec) {
@@ -116,41 +131,36 @@ wake_actions handle_wake_source(gpio_num_t wakeup_pin) {
 void handle_wake_actions(wake_actions action,
                          esp_mqtt_client_handle_t mqtt_client,
                          distance_measurements *distance_struct) {
-
 #define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
 #define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
 #define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
-  uint8_t taskMade = 0;
-
+#define buffSize 100
   while (action != WAKE_ACTION_NO_ACTION) {
+    char buff[buffSize];
     switch (action) {
     case WAKE_ACTION_NO_ACTION: {
       return;
     }
     case WAKE_ACTION_SEND_DISTANCE: {
       esp_err_t ret = ESP_OK;
-      if (taskMade == 0) {
-        ret = wait_for_distance(distance_struct);
-        taskMade = 0;
-      }
+      ret = wait_for_distance(distance_struct);
 
       if (ret == ESP_OK) {
-        esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE HERE", 0, 1,
-                                0);
+        snprintf(buff, buffSize, "{\"distance\":%ld,\"lid\":\"closed\"}",
+                 distance_struct->average_measured);
       } else {
-        esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE THREAD ERROR",
-                                0, 1, 0);
+        snprintf(buff, buffSize,
+                 "{\"error\":\"Distance-error\",\"lid\":\"closed\"}");
       }
-
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
       action = WAKE_ACTION_NO_ACTION;
       enable_rtc_if_closed(WAKEUP_PIN);
       break;
     }
     case WAKE_ACTION_SEND_ALIVE: {
-      // FIXME: Proper message and topic
-      esp_mqtt_client_publish(mqtt_client, "asd/asd", "IM ALIVE", 0, 1, 0);
+      snprintf(buff, buffSize, "{\"status\":\"alive\"}");
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
       action = WAKE_ACTION_NO_ACTION;
-      enable_rtc_if_closed(WAKEUP_PIN);
       break;
     }
     case WAKE_ACTION_WAIT_FOR_RTC_CLOSE: {
@@ -162,12 +172,14 @@ void handle_wake_actions(wake_actions action,
       break;
     }
     case WAKE_ACTION_SEND_ERROR_OPEN: {
-      esp_mqtt_client_publish(mqtt_client, "asd/asd", "ERROR IS OPEN", 0, 1, 0);
+      snprintf(buff, buffSize, "{\"lid\":\"open\"}");
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
       action = WAKE_ACTION_NO_ACTION;
       break;
     }
     case WAKE_ACTION_SEND_UNK_ERROR: {
-      esp_mqtt_client_publish(mqtt_client, "asd/asd", "VERY ERROR", 0, 1, 0);
+      snprintf(buff, buffSize, "{\"error\":\"Unknown error\"}");
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
       action = WAKE_ACTION_NO_ACTION;
       enable_rtc_if_closed(WAKEUP_PIN);
       break;

@@ -2,7 +2,6 @@
 #define ultrasonic_distance_h
 
 #include "esp_err.h"
-#include "freertos/idf_additions.h"
 #include "soc/gpio_num.h"
 #include <stdint.h>
 
