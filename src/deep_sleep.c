@@ -1,10 +1,12 @@
 #include "deep_sleep.h"
+#include "driver/gpio.h"
 #include "driver/rtc_io.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
 #include "esp_wifi.h"
 #include "freertos/task.h"
+#include "hal/gpio_types.h"
 #include "hal/rtc_io_types.h"
 #include "mqtt.h"
 #include "mqtt_client.h"
@@ -79,7 +81,7 @@ esp_sleep_wakeup_cause_t get_wake_source() {
 uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
   struct timeval circuit_open_time, current_time;
   gettimeofday(&circuit_open_time, NULL);
-  ESP_ERROR_CHECK(rtc_gpio_set_direction(wakeup_pin, RTC_GPIO_MODE_INPUT_ONLY));
+  ESP_ERROR_CHECK(gpio_set_direction(wakeup_pin, GPIO_MODE_INPUT));
   while (gpio_get_level(wakeup_pin) == 1) {
     gettimeofday(&current_time, NULL);
     if (current_time.tv_sec - max_seconds_wait >= circuit_open_time.tv_sec) {
