@@ -29,9 +29,9 @@ void enable_timer_wake(int wakeup_time_sec) {
 }
 
 void enable_rtc_io_wake(int wakeup_pin, int level) {
+  ESP_LOGI(TAG, "Enabling RTC_IO wakeup on pin %d", wakeup_pin);
   ESP_ERROR_CHECK(rtc_gpio_pullup_en(wakeup_pin));
   ESP_ERROR_CHECK(esp_sleep_enable_ext0_wakeup(wakeup_pin, level));
-  ESP_LOGI(TAG, "Enabling GPIO wakeup on pin %d", wakeup_pin);
 }
 
 void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client) {
