@@ -4,5 +4,6 @@ idf_component_register(SRCS "main.c" "deep_sleep.c" "wifi.c" "mqtt.c" "ultrasoni
                     EMBED_TXTFILES
                     ../certs/AmazonRootCA1.pem
                     ../certs/client.pem.key
-                    ../certs/client.pem.crt)
+                    ../certs/client.pem.crt
+                    ../certs/client-public.pem.key)
 

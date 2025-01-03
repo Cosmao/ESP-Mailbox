@@ -11,12 +11,14 @@ extern const uint8_t client_cert_pem_end[] asm("_binary_client_pem_crt_end");
 extern const uint8_t client_key_pem_start[] asm("_binary_client_pem_key_start");
 extern const uint8_t client_key_pem_end[] asm("_binary_client_pem_key_end");
 extern const uint8_t
-    server_cert_pem_start[] asm("_binary_amazonrootca1_pem_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_amazonrootca1_pem_end");
+    server_cert_pem_start[] asm("_binary_AmazonRootCA1_pem_start");
+extern const uint8_t server_cert_pem_end[] asm("_binary_AmazonRootCA1_pem_end");
+extern const uint8_t
+    client_public_pem_key_start[] asm("_binary_client_public_pem_key_start");
+extern const uint8_t
+    client_public_pem_key_end[] asm("_binary_client_public_pem_key_end");
 
 static const char *TAG = "Mqtt status";
-const char *topic = CONFIG_ESP_MQTT_TOPIC;
-const char *endpoint = CONFIG_ESP_MQTT_ENDPOINT;
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
                                int32_t event_id, void *event_data) {
@@ -28,14 +30,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
   switch ((esp_mqtt_event_id_t)event_id) {
   case MQTT_EVENT_CONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-    msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-    ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-    msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-    ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-    msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-    ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+    /*msg_id = esp_mqtt_client_subscribe(client, topic, 0);*/
+    /*ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);*/
     break;
   case MQTT_EVENT_DISCONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -43,8 +39,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
 
   case MQTT_EVENT_SUBSCRIBED:
     ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-    msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-    ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+    /*msg_id = esp_mqtt_client_publish(client, topic, "data", 0, 0, 0);*/
+    /*ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);*/
     break;
   case MQTT_EVENT_UNSUBSCRIBED:
     ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
@@ -86,7 +82,7 @@ esp_mqtt_client_handle_t mqtt_start(void) {
 #define buffSize 100
 
   const esp_mqtt_client_config_t mqtt_cfg = {
-      .broker.address.uri = endpoint,
+      .broker.address.uri = mqtt_endpoint,
       .broker.verification.certificate = (const char *)server_cert_pem_start,
       .credentials = {
           .authentication =
@@ -106,7 +102,7 @@ esp_mqtt_client_handle_t mqtt_start(void) {
   ESP_ERROR_CHECK(esp_mqtt_client_start(client));
   char buff[buffSize];
   snprintf(buff, buffSize, "{\"payload\":\"TestMessage\"}");
-  esp_mqtt_client_enqueue(client, topic, buff, 0, 1, 0, false);
+  esp_mqtt_client_enqueue(client, mqtt_topic, buff, 0, 1, 0, false);
   return client;
 }
 

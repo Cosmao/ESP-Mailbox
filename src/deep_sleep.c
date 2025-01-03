@@ -6,6 +6,7 @@
 #include "esp_wifi.h"
 #include "freertos/task.h"
 #include "hal/rtc_io_types.h"
+#include "mqtt.h"
 #include "mqtt_client.h"
 #include "soc/gpio_num.h"
 #include "soc/soc_caps.h"
@@ -135,11 +136,13 @@ void handle_wake_actions(wake_actions action,
       }
 
       if (ret == ESP_OK) {
-        esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE HERE", 0, 1,
+        esp_mqtt_client_publish(mqtt_client, mqtt_topic,
+                                "{\"distance\":%d,\"lid\":\"closed\"}", 0, 1,
                                 0);
       } else {
-        esp_mqtt_client_publish(mqtt_client, "asd/asd", "DISTANCE THREAD ERROR",
-                                0, 1, 0);
+        esp_mqtt_client_publish(
+            mqtt_client, mqtt_topic,
+            "{\"error\":\"Distance-error\",\"lid\":\"closed\"}", 0, 1, 0);
       }
 
       action = WAKE_ACTION_NO_ACTION;
@@ -148,7 +151,8 @@ void handle_wake_actions(wake_actions action,
     }
     case WAKE_ACTION_SEND_ALIVE: {
       // FIXME: Proper message and topic
-      esp_mqtt_client_publish(mqtt_client, "asd/asd", "IM ALIVE", 0, 1, 0);
+      esp_mqtt_client_publish(mqtt_client, mqtt_topic, "{\"status\":\"alive\"}",
+                              0, 1, 0);
       action = WAKE_ACTION_NO_ACTION;
       enable_rtc_if_closed(WAKEUP_PIN);
       break;
@@ -162,12 +166,14 @@ void handle_wake_actions(wake_actions action,
       break;
     }
     case WAKE_ACTION_SEND_ERROR_OPEN: {
-      esp_mqtt_client_publish(mqtt_client, "asd/asd", "ERROR IS OPEN", 0, 1, 0);
+      esp_mqtt_client_publish(mqtt_client, mqtt_topic, "{\"lid\":\"open\"}", 0,
+                              1, 0);
       action = WAKE_ACTION_NO_ACTION;
       break;
     }
     case WAKE_ACTION_SEND_UNK_ERROR: {
-      esp_mqtt_client_publish(mqtt_client, "asd/asd", "VERY ERROR", 0, 1, 0);
+      esp_mqtt_client_publish(mqtt_client, mqtt_topic,
+                              "{\"error\":\"Unknown error\"}", 0, 1, 0);
       action = WAKE_ACTION_NO_ACTION;
       enable_rtc_if_closed(WAKEUP_PIN);
       break;
