@@ -47,6 +47,7 @@ void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
   esp_mqtt_client_unsubscribe(mqtt_client, mqtt_topic);
+  esp_mqtt_client_disconnect(mqtt_client);
   esp_mqtt_client_stop(mqtt_client);
   ESP_LOGI(TAG, "Disabling wifi");
   esp_wifi_stop();
