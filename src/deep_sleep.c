@@ -22,10 +22,9 @@ static char *TAG = "DEEP_SLEEP";
 static RTC_DATA_ATTR struct timeval sleep_enter_time;
 #endif
 
-void enable_timer_wake(int wakeup_time_sec) {
-  ESP_LOGI(TAG, "Enabling wakeup timer, %ds", wakeup_time_sec);
-  ESP_ERROR_CHECK(
-      esp_sleep_enable_timer_wakeup((unsigned long)wakeup_time_sec * 1000000));
+void enable_timer_wake(unsigned long wakeup_time_sec) {
+  ESP_LOGI(TAG, "Enabling wakeup timer, %lus", wakeup_time_sec);
+  ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000));
 }
 
 void enable_rtc_io_wake(int wakeup_pin, int level) {
@@ -108,7 +107,13 @@ uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin) {
 
 wake_actions handle_wake_source(gpio_num_t wakeup_pin) {
   switch (get_wake_source()) {
-  case ESP_SLEEP_WAKEUP_UNDEFINED:
+  case ESP_SLEEP_WAKEUP_UNDEFINED: {
+    if (enable_rtc_if_closed(wakeup_pin)) {
+      return WAKE_ACTION_REBOOT;
+    } else {
+      return WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
+    }
+  }
   case ESP_SLEEP_WAKEUP_TIMER: {
     if (enable_rtc_if_closed(wakeup_pin)) {
       return WAKE_ACTION_SEND_ALIVE;
@@ -183,6 +188,13 @@ void handle_wake_actions(wake_actions action,
       esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
       action = WAKE_ACTION_NO_ACTION;
       enable_rtc_if_closed(WAKEUP_PIN);
+      break;
+    }
+    case WAKE_ACTION_REBOOT: {
+      snprintf(buff, buffSize, "{\"reboot\":\"true\"}");
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
+      /*Hopping there since the powerbank seems fucked*/
+      action = WAKE_ACTION_SEND_DISTANCE;
       break;
     }
     }

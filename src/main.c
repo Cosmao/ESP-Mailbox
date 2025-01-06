@@ -12,7 +12,6 @@
 
 #define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
 #define WAKEUP_TIME_HOURS CONFIG_ESP_WAKEUP_TIME_IN_HOURS
-#define WAKEUP_TIME_SEC (WAKEUP_TIME_HOURS * 60 * 60)
 #define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
 #define ECHO_PIN CONFIG_ESP_ECHO_PIN
 #define TRIG_PIN CONFIG_ESP_TRIG_PIN
@@ -43,7 +42,7 @@ void app_main(void) {
   esp_mqtt_client_handle_t mqtt_client = mqtt_enable();
   wake_actions action = WAKE_ACTION_NO_ACTION;
 
-  enable_timer_wake(WAKEUP_TIME_SEC);
+  enable_timer_wake(WAKEUP_TIME_HOURS * 60 * 60);
 
   if (mqtt_client != NULL) {
     action = handle_wake_source(WAKEUP_PIN);

@@ -14,9 +14,10 @@ typedef enum {
   WAKE_ACTION_WAIT_FOR_RTC_CLOSE,
   WAKE_ACTION_SEND_ERROR_OPEN,
   WAKE_ACTION_SEND_UNK_ERROR,
+  WAKE_ACTION_REBOOT,
 } wake_actions;
 
-void enable_timer_wake(int wakeup_time_sec);
+void enable_timer_wake(unsigned long wakeup_time_sec);
 void enable_rtc_io_wake(int GPIO_PORT, int level);
 void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client);
 esp_sleep_wakeup_cause_t get_wake_source(void);
