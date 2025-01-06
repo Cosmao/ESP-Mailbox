@@ -76,11 +76,11 @@ menu "Wifi and MQTT config"
       help
         How many seconds to wait on a reed wake before a timeout is triggered and we go back to sleep
 
-    config ESP_WAKEUP_TIME_IN_SEC
-      int "RTC Wakeup time in sec"
-      default 30
+    config ESP_WAKEUP_TIME_IN_HOURS
+      int "RTC Wakeup time in hours"
+      default 5
       help
-        How many seconds between the ESP waking itself to check into the mqtt server to make sure the battery and connection is still good
+        How many hours between the ESP waking itself to check into the mqtt server to make sure the battery and connection is still good
 
     config ESP_ECHO_PIN
       int "Distance sensor echo pin"

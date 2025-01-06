@@ -7,7 +7,6 @@
 #include "esp_wifi.h"
 #include "freertos/task.h"
 #include "hal/gpio_types.h"
-#include "hal/rtc_io_types.h"
 #include "mqtt.h"
 #include "mqtt_client.h"
 #include "portmacro.h"
@@ -25,7 +24,8 @@ static RTC_DATA_ATTR struct timeval sleep_enter_time;
 
 void enable_timer_wake(int wakeup_time_sec) {
   ESP_LOGI(TAG, "Enabling wakeup timer, %ds", wakeup_time_sec);
-  ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000));
+  ESP_ERROR_CHECK(
+      esp_sleep_enable_timer_wakeup((unsigned long)wakeup_time_sec * 1000000));
 }
 
 void enable_rtc_io_wake(int wakeup_pin, int level) {
