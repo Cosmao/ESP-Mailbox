@@ -152,8 +152,12 @@ void handle_wake_actions(wake_actions action,
       ret = wait_for_distance(distance_struct);
 
       if (ret == ESP_OK) {
-        snprintf(buff, buffSize, "{\"distance\":%ld,\"lid\":\"closed\"}",
-                 distance_struct->average_measured);
+        snprintf(
+            buff, buffSize,
+            "{\"distance\":{\"1\":%ld,\"2\":%ld,\"3\":%ld},\"lid\":\"closed\"}",
+            distance_struct->measured_array[0],
+            distance_struct->measured_array[1],
+            distance_struct->measured_array[2]);
       } else {
         snprintf(buff, buffSize,
                  "{\"error\":\"Distance-error\",\"lid\":\"closed\"}");
