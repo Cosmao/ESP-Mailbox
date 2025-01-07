@@ -111,11 +111,7 @@ uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin) {
 wake_actions handle_wake_source(gpio_num_t wakeup_pin) {
   switch (get_wake_source()) {
   case ESP_SLEEP_WAKEUP_UNDEFINED: {
-    if (enable_rtc_if_closed(wakeup_pin)) {
-      return WAKE_ACTION_REBOOT;
-    } else {
-      return WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
-    }
+    return WAKE_ACTION_REBOOT;
   }
   case ESP_SLEEP_WAKEUP_TIMER: {
     if (enable_rtc_if_closed(wakeup_pin)) {
@@ -177,10 +173,10 @@ void handle_wake_actions(wake_actions action,
       break;
     }
     case WAKE_ACTION_WAIT_FOR_RTC_CLOSE: {
-      if (wait_for_low(WAKEUP_PIN, RTC_TIMEOUT_SEC)) {
-        action = WAKE_ACTION_SEND_ERROR_OPEN;
-      } else {
+      if (enable_rtc_if_closed(WAKEUP_PIN)) {
         action = WAKE_ACTION_SEND_DISTANCE;
+      } else {
+        action = WAKE_ACTION_SEND_ERROR_OPEN;
       }
       break;
     }
