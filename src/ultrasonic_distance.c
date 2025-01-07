@@ -89,6 +89,7 @@ void measure_distance_task(void *pvParameters) {
 
     if (distance == -1) {
       ESP_LOGE(TAG, "Error in distance read loop %d", i);
+      distance_struct->measured_array[i] = distance;
     } else {
       total_measurements++;
       total_distance += distance;

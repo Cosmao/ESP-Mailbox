@@ -160,12 +160,8 @@ void handle_wake_actions(wake_actions action,
             distance_struct->measured_array[1],
             distance_struct->measured_array[2]);
       } else {
-        snprintf(
-            buff, buffSize,
-            "{\"distance\":{\"1\":%ld,\"2\":%ld,\"3\":%ld},\"lid\":\"open\"}",
-            distance_struct->measured_array[0],
-            distance_struct->measured_array[1],
-            distance_struct->measured_array[2]);
+        snprintf(buff, buffSize,
+                 "{\"error\":\"Distance-error\",\"lid\":\"closed\"}");
       }
       esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
       action = WAKE_ACTION_NO_ACTION;
