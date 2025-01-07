@@ -1,10 +1,12 @@
 #include "include/mqtt.h"
+#include "esp_err.h"
 #include "esp_event_base.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "mqtt_client.h"
 #include "sdkconfig.h"
 #include "wifi.h"
+#include <stdint.h>
 
 extern const uint8_t client_cert_start[] asm("_binary_esp32_crt_start");
 extern const uint8_t client_cert_end[] asm("_binary_esp32_crt_end");
@@ -33,7 +35,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
   case MQTT_EVENT_DISCONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
     break;
-
   case MQTT_EVENT_SUBSCRIBED:
     ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
     break;
@@ -67,6 +68,9 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
                event->error_handle->error_type);
     }
     break;
+  case MQTT_EVENT_BEFORE_CONNECT: {
+    break;
+  }
   default:
     ESP_LOGI(TAG, "Other event id:%d", event->event_id);
     break;
@@ -75,11 +79,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
 
 esp_mqtt_client_handle_t mqtt_start(void) {
 #define buffSize 100
-
   const esp_mqtt_client_config_t mqtt_cfg = {
       .broker.address.uri = mqtt_endpoint,
       .broker.verification.certificate = (const char *)server_cert_start,
       .broker.verification.skip_cert_common_name_check = true,
+      .network.disable_auto_reconnect = false,
+      .network.reconnect_timeout_ms = 1000,
       .credentials = {
           .authentication =
               {

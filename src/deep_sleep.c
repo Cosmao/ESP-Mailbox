@@ -12,6 +12,7 @@
 #include "portmacro.h"
 #include "soc/gpio_num.h"
 #include "soc/soc_caps.h"
+#include "wifi.h"
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
@@ -34,21 +35,22 @@ void enable_rtc_io_wake(int wakeup_pin, int level) {
 }
 
 void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client) {
-  ESP_LOGI(TAG, "Disabling mqtt");
   struct timeval start, now;
   gettimeofday(&start, NULL);
   while (esp_mqtt_client_get_outbox_size(mqtt_client) > 0) {
     ESP_LOGI(TAG, "Message left to send, waiting");
     gettimeofday(&now, NULL);
-    if (now.tv_sec - 1 > start.tv_sec) {
+    if (now.tv_sec - 10 > start.tv_sec) {
       break;
     }
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
+  ESP_LOGI(TAG, "Disabling mqtt");
   esp_mqtt_client_unsubscribe(mqtt_client, mqtt_topic);
   esp_mqtt_client_disconnect(mqtt_client);
   esp_mqtt_client_stop(mqtt_client);
   ESP_LOGI(TAG, "Disabling wifi");
+  dont_reconnect = 1;
   esp_wifi_disconnect();
   esp_wifi_stop();
   vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -198,8 +200,7 @@ void handle_wake_actions(wake_actions action,
     case WAKE_ACTION_REBOOT: {
       snprintf(buff, buffSize, "{\"reboot\":\"true\"}");
       esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
-      /*Hopping there since the powerbank seems fucked*/
-      action = WAKE_ACTION_SEND_DISTANCE;
+      action = WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
       break;
     }
     }
