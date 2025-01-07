@@ -97,7 +97,7 @@ void measure_distance_task(void *pvParameters) {
       ESP_LOGI(TAG, "Loop %d measured: %ldmm", i, distance);
     }
     /* delaying to let the sensor reset */
-    vTaskDelay(50 / portTICK_PERIOD_MS);
+    vTaskDelay(75 / portTICK_PERIOD_MS);
   }
 
   if (total_measurements == 0) {
