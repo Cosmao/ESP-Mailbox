@@ -32,6 +32,13 @@ void handle_wake_actions(wake_actions action,
 #define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
 #define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
 #define buffSize 32
+#ifdef CONFIG_MQTT_QOS_0
+#define MQTT_QOS 0
+#elif CONFIG_MQTT_QOS_1
+#define MQTT_QOS 1
+#elif CONFIG_MQTT_QOS_2
+#define MQTT_QOS 2
+#endif
   while (action != WAKE_ACTION_NO_ACTION) {
     char buff[buffSize];
     switch (action) {
@@ -40,13 +47,14 @@ void handle_wake_actions(wake_actions action,
     }
     case WAKE_ACTION_SEND_CLOSED: {
       snprintf(buff, buffSize, "{\"lid\":\"closed\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, MQTT_QOS, 0,
+                              true);
       action = WAKE_ACTION_NO_ACTION;
       break;
     }
     case WAKE_ACTION_SEND_ALIVE: {
       snprintf(buff, buffSize, "{\"status\":\"alive\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 2, 0, true);
       action = WAKE_ACTION_NO_ACTION;
       break;
     }
@@ -62,7 +70,7 @@ void handle_wake_actions(wake_actions action,
     }
     case WAKE_ACTION_SEND_ERROR_OPEN: {
       snprintf(buff, buffSize, "{\"lid\":\"open\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 2, 0, true);
       /*Wake on lid closed*/
       enable_rtc_io_wake(WAKEUP_PIN, 0);
       action = WAKE_ACTION_NO_ACTION;
@@ -70,14 +78,14 @@ void handle_wake_actions(wake_actions action,
     }
     case WAKE_ACTION_SEND_UNK_ERROR: {
       snprintf(buff, buffSize, "{\"error\":\"Unknown error\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 2, 0, true);
       action = WAKE_ACTION_NO_ACTION;
       enable_rtc_wake_if_closed(WAKEUP_PIN);
       break;
     }
     case WAKE_ACTION_REBOOT: {
       snprintf(buff, buffSize, "{\"reboot\":\"true\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
+      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 2, 0, true);
       action = WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
       break;
     }
