@@ -81,13 +81,12 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
     if (current_time.tv_sec - max_seconds_wait >= circuit_open_time.tv_sec) {
       return 1;
     }
-    ESP_LOGI(TAG, "Delay run in wait_for_low");
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
   return 0;
 }
 
-uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin) {
+uint8_t enable_rtc_wake_if_closed(gpio_num_t wakeup_pin) {
 #define numMeasurements 5
   uint8_t numHigh = 0;
   for (uint8_t i = 0; i < numMeasurements; i++) {
@@ -98,84 +97,4 @@ uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin) {
     return 1;
   }
   return 0;
-}
-
-wake_actions handle_wake_source(gpio_num_t wakeup_pin) {
-  switch (get_wake_source()) {
-  case ESP_SLEEP_WAKEUP_UNDEFINED: {
-    return WAKE_ACTION_REBOOT;
-  }
-  case ESP_SLEEP_WAKEUP_TIMER: {
-    if (enable_rtc_if_closed(wakeup_pin)) {
-      return WAKE_ACTION_SEND_ALIVE;
-    } else {
-      return WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
-    }
-  }
-  case ESP_SLEEP_WAKEUP_EXT0: {
-    if (enable_rtc_if_closed(wakeup_pin)) {
-      return WAKE_ACTION_SEND_CLOSED;
-    } else {
-      return WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
-    }
-  }
-  default: {
-    return WAKE_ACTION_SEND_UNK_ERROR;
-  }
-  }
-}
-
-void handle_wake_actions(wake_actions action,
-                         esp_mqtt_client_handle_t mqtt_client) {
-#define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
-#define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
-#define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
-#define buffSize 32
-  while (action != WAKE_ACTION_NO_ACTION) {
-    char buff[buffSize];
-    switch (action) {
-    case WAKE_ACTION_NO_ACTION: {
-      return;
-    }
-    case WAKE_ACTION_SEND_CLOSED: {
-      snprintf(buff, buffSize, "{\"lid\":\"closed\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
-      action = WAKE_ACTION_NO_ACTION;
-      break;
-    }
-    case WAKE_ACTION_SEND_ALIVE: {
-      snprintf(buff, buffSize, "{\"status\":\"alive\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
-      action = WAKE_ACTION_NO_ACTION;
-      break;
-    }
-    case WAKE_ACTION_WAIT_FOR_RTC_CLOSE: {
-      if (wait_for_low(WAKEUP_PIN, RTC_TIMEOUT_SEC)) {
-        action = WAKE_ACTION_SEND_ERROR_OPEN;
-      } else {
-        action = WAKE_ACTION_SEND_CLOSED;
-      }
-      break;
-    }
-    case WAKE_ACTION_SEND_ERROR_OPEN: {
-      snprintf(buff, buffSize, "{\"lid\":\"open\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
-      action = WAKE_ACTION_NO_ACTION;
-      break;
-    }
-    case WAKE_ACTION_SEND_UNK_ERROR: {
-      snprintf(buff, buffSize, "{\"error\":\"Unknown error\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
-      action = WAKE_ACTION_NO_ACTION;
-      enable_rtc_if_closed(WAKEUP_PIN);
-      break;
-    }
-    case WAKE_ACTION_REBOOT: {
-      snprintf(buff, buffSize, "{\"reboot\":\"true\"}");
-      esp_mqtt_client_enqueue(mqtt_client, mqtt_topic, buff, 0, 1, 0, true);
-      action = WAKE_ACTION_WAIT_FOR_RTC_CLOSE;
-      break;
-    }
-    }
-  }
 }
