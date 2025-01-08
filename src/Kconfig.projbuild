@@ -1,4 +1,4 @@
-menu "Wifi and MQTT config"
+menu "Mailbox config"
 
     menu "Wifi config"
 
@@ -91,6 +91,19 @@ menu "Wifi and MQTT config"
       default "letterbox/"
       help
         What topic its supposed to send messages to
+
+    choice ESP_MQTT_QOS
+      prompt "MQTT QoS"
+      default MQTT_QOS_1
+      help
+        What QoS to send the MQTT messages over
+      config MQTT_QOS_0 
+        bool "QoS 0"
+      config MQTT_QOS_1
+        bool "QoS 1"
+      config MQTT_QOS_2
+        bool "QoS 2"
+    endchoice
 
     config ESP_MQTT_ENDPOINT
       string "Mqtt endpoint"
