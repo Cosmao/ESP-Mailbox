@@ -1,68 +1,72 @@
 menu "Wifi and MQTT config"
 
-    config ESP_WIFI_SSID
-        string "WiFi SSID"
-        default "myssid"
-        help
-            SSID (network name) for the example to connect to.
+    menu "Wifi config"
 
-    config ESP_WIFI_PASSWORD
-        string "WiFi Password"
-        default "mypassword"
-        help
-            WiFi password (WPA or WPA2) for the example to use.
+      config ESP_WIFI_SSID
+          string "WiFi SSID"
+          default "myssid"
+          help
+              SSID (network name) for the example to connect to.
 
-    choice ESP_WIFI_SAE_MODE
-        prompt "WPA3 SAE mode selection"
-        default ESP_WPA3_SAE_PWE_BOTH
-        help
-            Select mode for SAE as Hunt and Peck, H2E or both.
-        config ESP_WPA3_SAE_PWE_HUNT_AND_PECK
-            bool "HUNT AND PECK"
-        config ESP_WPA3_SAE_PWE_HASH_TO_ELEMENT
-            bool "H2E"
-        config ESP_WPA3_SAE_PWE_BOTH
-            bool "BOTH"
-    endchoice
+      config ESP_WIFI_PASSWORD
+          string "WiFi Password"
+          default "mypassword"
+          help
+              WiFi password (WPA or WPA2) for the example to use.
 
-    config ESP_WIFI_PW_ID
-        string "PASSWORD IDENTIFIER"
-        depends on  ESP_WPA3_SAE_PWE_HASH_TO_ELEMENT|| ESP_WPA3_SAE_PWE_BOTH
-        default ""
-        help
-            password identifier for SAE H2E
+      choice ESP_WIFI_SAE_MODE
+          prompt "WPA3 SAE mode selection"
+          default ESP_WPA3_SAE_PWE_BOTH
+          help
+              Select mode for SAE as Hunt and Peck, H2E or both.
+          config ESP_WPA3_SAE_PWE_HUNT_AND_PECK
+              bool "HUNT AND PECK"
+          config ESP_WPA3_SAE_PWE_HASH_TO_ELEMENT
+              bool "H2E"
+          config ESP_WPA3_SAE_PWE_BOTH
+              bool "BOTH"
+      endchoice
 
-    config ESP_MAXIMUM_RETRY
-        int "Maximum retry"
-        default 5
-        help
-            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+      config ESP_WIFI_PW_ID
+          string "PASSWORD IDENTIFIER"
+          depends on  ESP_WPA3_SAE_PWE_HASH_TO_ELEMENT|| ESP_WPA3_SAE_PWE_BOTH
+          default ""
+          help
+              password identifier for SAE H2E
 
-    choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
-        prompt "WiFi Scan auth mode threshold"
-        default ESP_WIFI_AUTH_WPA2_PSK
-        help
-            The weakest authmode to accept in the scan mode.
-            This value defaults to ESP_WIFI_AUTH_WPA2_PSK incase password is present and ESP_WIFI_AUTH_OPEN is used.
-            Please select ESP_WIFI_AUTH_WEP/ESP_WIFI_AUTH_WPA_PSK incase AP is operating in WEP/WPA mode.
+      config ESP_MAXIMUM_RETRY
+          int "Maximum retry"
+          default 5
+          help
+              Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
 
-        config ESP_WIFI_AUTH_OPEN
-            bool "OPEN"
-        config ESP_WIFI_AUTH_WEP
-            bool "WEP"
-        config ESP_WIFI_AUTH_WPA_PSK
-            bool "WPA PSK"
-        config ESP_WIFI_AUTH_WPA2_PSK
-            bool "WPA2 PSK"
-        config ESP_WIFI_AUTH_WPA_WPA2_PSK
-            bool "WPA/WPA2 PSK"
-        config ESP_WIFI_AUTH_WPA3_PSK
-            bool "WPA3 PSK"
-        config ESP_WIFI_AUTH_WPA2_WPA3_PSK
-            bool "WPA2/WPA3 PSK"
-        config ESP_WIFI_AUTH_WAPI_PSK
-            bool "WAPI PSK"
-    endchoice
+      choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
+          prompt "WiFi Scan auth mode threshold"
+          default ESP_WIFI_AUTH_WPA2_PSK
+          help
+              The weakest authmode to accept in the scan mode.
+              This value defaults to ESP_WIFI_AUTH_WPA2_PSK incase password is present and ESP_WIFI_AUTH_OPEN is used.
+              Please select ESP_WIFI_AUTH_WEP/ESP_WIFI_AUTH_WPA_PSK incase AP is operating in WEP/WPA mode.
+
+          config ESP_WIFI_AUTH_OPEN
+              bool "OPEN"
+          config ESP_WIFI_AUTH_WEP
+              bool "WEP"
+          config ESP_WIFI_AUTH_WPA_PSK
+              bool "WPA PSK"
+          config ESP_WIFI_AUTH_WPA2_PSK
+              bool "WPA2 PSK"
+          config ESP_WIFI_AUTH_WPA_WPA2_PSK
+              bool "WPA/WPA2 PSK"
+          config ESP_WIFI_AUTH_WPA3_PSK
+              bool "WPA3 PSK"
+          config ESP_WIFI_AUTH_WPA2_WPA3_PSK
+              bool "WPA2/WPA3 PSK"
+          config ESP_WIFI_AUTH_WAPI_PSK
+              bool "WAPI PSK"
+      endchoice
+
+    endmenu
 
     config ESP_RTC_WAKEUP_PIN
       int "RTC Wakeup pin"
@@ -81,24 +85,6 @@ menu "Wifi and MQTT config"
       default 5
       help
         How many hours between the ESP waking itself to check into the mqtt server to make sure the battery and connection is still good
-
-    config ESP_ECHO_PIN
-      int "Distance sensor echo pin"
-      default 4
-      help
-        What pin to register the distance sensors echo on
-
-    config ESP_TRIG_PIN
-      int "Distance sensor trigger pin"
-      default 5
-      help
-        What pin to trigger the distance sensor on
-
-    config ESP_DISTANCE_TIMEOUT_U_SEC
-      int "Distance sensors timeout in u seconds"
-      default 5000
-      help 
-        How many microseconds to wait for the echo on distance sensor
 
     config ESP_MQTT_TOPIC
       string "Mqtt topic to use"
