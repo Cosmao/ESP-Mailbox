@@ -1,5 +1,6 @@
 #include "deep_sleep.h"
 #include "esp_err.h"
+#include "logic_flow.h"
 #include "mqtt.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
@@ -7,8 +8,6 @@
 
 #define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
 #define WAKEUP_TIME_HOURS CONFIG_ESP_WAKEUP_TIME_IN_HOURS
-
-static char *TAG = "MAIN";
 
 void app_main(void) {
   esp_err_t ret = nvs_flash_init();
