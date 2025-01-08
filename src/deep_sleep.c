@@ -130,7 +130,7 @@ void handle_wake_actions(wake_actions action,
 #define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
 #define WAKEUP_TIME_SEC CONFIG_ESP_WAKEUP_TIME_IN_SEC
 #define RTC_TIMEOUT_SEC CONFIG_ESP_RTC_TIMEOUT_SEC
-#define buffSize 100
+#define buffSize 32
   while (action != WAKE_ACTION_NO_ACTION) {
     char buff[buffSize];
     switch (action) {
