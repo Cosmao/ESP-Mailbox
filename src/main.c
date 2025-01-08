@@ -4,7 +4,6 @@
 #include "mqtt_client.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "ultrasonic_distance.h"
 
 #define WAKEUP_PIN CONFIG_ESP_RTC_WAKEUP_PIN
 #define WAKEUP_TIME_HOURS CONFIG_ESP_WAKEUP_TIME_IN_HOURS

@@ -4,7 +4,6 @@
 #include "esp_sleep.h"
 #include "mqtt_client.h"
 #include "soc/gpio_num.h"
-#include "ultrasonic_distance.h"
 #include <stdint.h>
 
 typedef enum {
@@ -25,7 +24,6 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait);
 uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin);
 wake_actions handle_wake_source(gpio_num_t wakeup_pin);
 void handle_wake_actions(wake_actions action,
-                         esp_mqtt_client_handle_t mqtt_client,
-                         distance_measurements *distance_struct);
+                         esp_mqtt_client_handle_t mqtt_client);
 
 #endif // !deep_sleep_h
