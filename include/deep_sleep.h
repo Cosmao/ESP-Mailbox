@@ -21,7 +21,7 @@ void enable_rtc_io_wake(int GPIO_PORT, int level);
 void start_deep_sleep(esp_mqtt_client_handle_t mqtt_client);
 esp_sleep_wakeup_cause_t get_wake_source(void);
 uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait);
-uint8_t enable_rtc_if_closed(gpio_num_t wakeup_pin);
+uint8_t enable_rtc_wake_if_closed(gpio_num_t wakeup_pin);
 wake_actions handle_wake_source(gpio_num_t wakeup_pin);
 void handle_wake_actions(wake_actions action,
                          esp_mqtt_client_handle_t mqtt_client);
