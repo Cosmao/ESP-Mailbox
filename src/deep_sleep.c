@@ -11,7 +11,6 @@
 #include "mqtt_client.h"
 #include "portmacro.h"
 #include "soc/gpio_num.h"
-#include "soc/soc_caps.h"
 #include "wifi.h"
 #include <stdio.h>
 #include <sys/time.h>
@@ -82,6 +81,7 @@ uint8_t wait_for_low(gpio_num_t wakeup_pin, int max_seconds_wait) {
     if (current_time.tv_sec - max_seconds_wait >= circuit_open_time.tv_sec) {
       return 1;
     }
+    ESP_LOGI(TAG, "Delay run in wait_for_low");
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
   return 0;
@@ -150,10 +150,10 @@ void handle_wake_actions(wake_actions action,
       break;
     }
     case WAKE_ACTION_WAIT_FOR_RTC_CLOSE: {
-      if (enable_rtc_if_closed(WAKEUP_PIN)) {
-        action = WAKE_ACTION_SEND_CLOSED;
-      } else {
+      if (wait_for_low(WAKEUP_PIN, RTC_TIMEOUT_SEC)) {
         action = WAKE_ACTION_SEND_ERROR_OPEN;
+      } else {
+        action = WAKE_ACTION_SEND_CLOSED;
       }
       break;
     }
