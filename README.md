@@ -11,7 +11,7 @@ This project uses platformIO so we can access the configuration with: \
 | Option | Description |
 | --- | --- |
 | Wifi-config | Everything regarding the wifi connection can be found here |
-| RTC Wakeup pin | What pin to use as RTC Wakeup pin. WARNING YOU NEED TO CHOOSE A RTC PIN, THERES NO CHECK THAT YOU SELECT A CORRECT ONE |
+| RTC Wakeup pin | What pin to use as RTC Wakeup pin. WARNING YOU NEED TO CHOOSE A RTC ENABLED PIN! ESP will reboot if its invalid |
 | RTC Timeout in seconds | How many seconds to wait for the RTC pin to go high to make sure the mailbox lid is closed |
 | Timer wakeup in hours | How many hours between a timed wakeup to checkin to the backend to make sure connection and battery still work |
 | MQTT Topic | What topic to send all messages on |
