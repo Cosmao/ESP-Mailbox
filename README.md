@@ -20,7 +20,7 @@ This project uses platformIO so we can access the configuration with: \
 
 All the normal espressif settings are there and should be looked over to adapt it to your ESP.
 ### RTC Notes
-The RTC wake interrupt is designed as a pullup, I used the following schematic for the circuit: ![RTC-Schematic](rtc-schematic.jpg)
+The RTC wake interrupt is designed as a pullup, I used the following schematic for the circuit: ![RTC-Schematic](rtc-schematic.jpg) \
 Where the magnet was placed on the lid of the mailbox so the circuit goes high when the lid is opened and low when it is closed.
 ### Building and flashing
 Building the project should be as simple as running ```pio run -t upload``` which will compile the code and then find a connected ESP and upload the code to it. Theres a lot of debug messages being printed by the ESP so reading those could help in case you have a problem.
