@@ -7,7 +7,7 @@ This projekt is made for a ESP32C3 (could possibly work with other models) to re
  - Ultrasonic distance sensor (In its own branch)
 ### Project configuration
 This project uses platformIO so we can access the configuration with: \
-```pio run -t menuconfig``` \
+```pio run -t menuconfig``` 
 | Option | Description |
 | --- | --- |
 | Wifi-config | Everything regarding the wifi connection can be found here |
